@@ -329,6 +329,7 @@ pub enum BootstrapMode {
 #[derive(Debug, Clone)]
 pub struct BuildConfig {
     pub verifiable: bool,
+    pub debug_info: bool,
     pub solana_version: Option<String>,
     pub docker_image: String,
     pub bootstrap: BootstrapMode,

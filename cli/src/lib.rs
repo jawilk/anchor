@@ -85,6 +85,9 @@ pub enum Command {
         /// True if the build artifact needs to be deterministic and verifiable.
         #[clap(short, long)]
         verifiable: bool,
+        /// True if the build artifact should contain debug info
+        #[clap(short = 'D', long)]
+        debug_info: bool,
         #[clap(short, long)]
         program_name: Option<String>,
         /// Version of the Solana toolchain to use. For --verifiable builds
@@ -378,6 +381,7 @@ pub fn entry(opts: Opts) -> Result<()> {
             idl,
             idl_ts,
             verifiable,
+            debug_info,
             program_name,
             solana_version,
             docker_image,
@@ -389,6 +393,7 @@ pub fn entry(opts: Opts) -> Result<()> {
             idl,
             idl_ts,
             verifiable,
+            debug_info,
             skip_lint,
             program_name,
             solana_version,
@@ -733,6 +738,7 @@ pub fn build(
     idl: Option<String>,
     idl_ts: Option<String>,
     verifiable: bool,
+    debug_info: bool,
     skip_lint: bool,
     program_name: Option<String>,
     solana_version: Option<String>,
@@ -750,6 +756,7 @@ pub fn build(
     let cfg = Config::discover(cfg_override)?.expect("Not in workspace.");
     let build_config = BuildConfig {
         verifiable,
+        debug_info,
         solana_version: solana_version.or_else(|| cfg.solana_version.clone()),
         docker_image: docker_image.unwrap_or_else(|| cfg.docker()),
         bootstrap,
@@ -872,7 +879,14 @@ fn build_cwd(
         Some(p) => std::env::set_current_dir(&p)?,
     };
     match build_config.verifiable {
-        false => _build_cwd(cfg, idl_out, idl_ts_out, skip_lint, cargo_args),
+        false => _build_cwd(
+            cfg,
+            idl_out,
+            idl_ts_out,
+            build_config.debug_info,
+            skip_lint,
+            cargo_args,
+        ),
         true => build_cwd_verifiable(
             cfg,
             cargo_toml,
@@ -1185,11 +1199,18 @@ fn _build_cwd(
     cfg: &WithPath<Config>,
     idl_out: Option<PathBuf>,
     idl_ts_out: Option<PathBuf>,
+    debug_info: bool,
     skip_lint: bool,
     cargo_args: Vec<String>,
 ) -> Result<()> {
+    /*let debug_arg = if debug_info {
+        "--profile=release-with-debug"
+    } else {
+        ""
+    };*/
     let exit = std::process::Command::new("cargo")
         .arg("build-bpf")
+        //.arg(debug_arg)
         .args(cargo_args)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
@@ -1257,6 +1278,7 @@ fn verify(
         None,                                                  // idl
         None,                                                  // idl ts
         true,                                                  // verifiable
+        false,                                                 // debug_info
         true,                                                  // skip lint
         None,                                                  // program name
         solana_version.or_else(|| cfg.solana_version.clone()), // solana version
@@ -1816,6 +1838,7 @@ fn test(
                 cfg_override,
                 None,
                 None,
+                false,
                 false,
                 skip_lint,
                 None,
@@ -2906,6 +2929,7 @@ fn publish(
         None,
         true,
         false,
+        false,
         Some(program_name),
         None,
         None,
@@ -3003,6 +3027,7 @@ fn localnet(
                 cfg_override,
                 None,
                 None,
+                false,
                 false,
                 skip_lint,
                 None,

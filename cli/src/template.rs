@@ -68,6 +68,10 @@ default = []
 [profile.release]
 overflow-checks = true
 
+[profile.release-with-debug-info]
+inherits = "release"
+debug = true
+
 [dependencies]
 anchor-lang = "{2}"
 "#,
