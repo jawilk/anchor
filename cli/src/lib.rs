@@ -86,7 +86,7 @@ pub enum Command {
         #[clap(short, long)]
         verifiable: bool,
         /// True if the build artifact should contain debug info
-        #[clap(short = 'D', long)]
+        #[clap(short = 'g', long)]
         debug_info: bool,
         #[clap(short, long)]
         program_name: Option<String>,
@@ -1203,14 +1203,17 @@ fn _build_cwd(
     skip_lint: bool,
     cargo_args: Vec<String>,
 ) -> Result<()> {
+    println!("Debug: {}", debug_info);
+    println!("Cargo args: {:?}", cargo_args);
     /*let debug_arg = if debug_info {
-        "--profile=release-with-debug"
+        "--profile=release+debuginfo"
     } else {
         ""
     };*/
+    //let mut cargo_args_with_debug = cargo_args.clone();
+    //cargo_args_with_debug.push("profile=release+debuginfo".to_string());
     let exit = std::process::Command::new("cargo")
         .arg("build-bpf")
-        //.arg(debug_arg)
         .args(cargo_args)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
